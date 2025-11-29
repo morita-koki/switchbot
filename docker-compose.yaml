@@ -1,0 +1,51 @@
+services:
+  # --- 1. 門番 (Nginx) ---
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80" # HTTP (リダイレクト用)
+      - "443:443" # HTTPS (メイン)
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./certs:/etc/nginx/certs
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - app-network
+    restart: always
+
+  # --- 2. 脳 (FastAPI) ---
+  backend:
+    build: ./backend
+    # ports: "8000:8000" は書きません！外からは隠します。
+    volumes:
+      - ./backend:/app
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - SWITCHBOT_TOKEN=${SWITCHBOT_TOKEN}
+      - SWITCHBOT_SECRET=${SWITCHBOT_SECRET}
+      - TZ=Asia/Tokyo
+    networks:
+      - app-network
+    restart: always
+
+  # --- 3. 顔 (React) ---
+  frontend:
+    build: ./frontend
+    # ports: "5173:5173" は書きません！
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - WATCHPACK_POLLING=true # ファイル変更検知用
+    networks:
+      - app-network
+    stdin_open: true # React終了防止
+    tty: true
+    restart: always
+
+# 内部ネットワーク定義
+networks:
+  app-network:
+    driver: bridge

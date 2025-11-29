@@ -1,0 +1,38 @@
+// プロジェクト: SwitchBot AI Controller
+
+Table devices {
+  id varchar [pk, note: "MACアドレスまたは仮想ID"]
+  name varchar [note: "表示名 (例: リビングの温湿度計)"]
+  device_type varchar [note: "Meter, Hub, Bot, Cameraなど"]
+  location varchar [note: "設置場所 (任意)"]
+  created_at datetime [default: `current_timestamp`]
+}
+
+Table sensor_logs {
+  id integer [pk, increment]
+  device_id varchar [ref: > devices.id, note: "デバイスID"]
+  timestamp datetime [default: `current_timestamp`, note: "記録日時"]
+  temperature float [note: "温度 (℃)"]
+  humidity float [note: "相対湿度 (%)"]
+  absolute_humidity float [note: "容積絶対湿度 (g/m³) - 計算値"]
+  battery integer [note: "バッテリー残量 (%)"]
+  image_path varchar [note: "カメラ画像のファイルパス (任意)"]
+}
+
+Table operation_logs {
+  id integer [pk, increment]
+  timestamp datetime [default: `current_timestamp`]
+  device_id varchar [ref: > devices.id]
+  action varchar [note: "実行したアクション (turnOn, setTempなど)"]
+  parameter varchar [note: "設定値 (24, coolなど)"]
+  source varchar [note: "実行元 (user, ai, schedule, automation)"]
+  result varchar [note: "成功/失敗のステータス"]
+}
+
+Table chat_history {
+  id integer [pk, increment]
+  timestamp datetime [default: `current_timestamp`]
+  role varchar [note: "user または assistant"]
+  content text [note: "会話内容"]
+  tokens integer [note: "消費トークン数 (分析用)"]
+}
