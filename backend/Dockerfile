@@ -1,10 +1,27 @@
 FROM python:3.11-slim
 WORKDIR /app
+
+# Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
-COPY pyproject.toml .
-# 仮のpyproject.tomlがない場合のためにエラー回避
-RUN touch pyproject.toml
-# 基本ライブラリを一気に入れる
-RUN uv pip install --system fastapi uvicorn requests python-dotenv apscheduler openai
-# COPY . .
-CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# Copy dependency files
+COPY pyproject.toml uv.lock ./
+
+# Install dependencies
+RUN uv sync --frozen
+
+# Copy application code
+COPY src/ ./src/
+COPY migrations/ ./migrations/
+COPY alembic.ini ./
+COPY scripts/ ./scripts/
+COPY db/ ./db/
+
+# Make scripts executable
+RUN chmod +x ./scripts/db.sh
+
+# Expose port
+EXPOSE 8000
+
+# Start application
+CMD ["./scripts/db.sh", "dev"]
