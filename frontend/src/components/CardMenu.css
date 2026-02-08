@@ -1,0 +1,193 @@
+.card-menu {
+  /* position relative so dropdown positions correctly when placed in header/nav */
+  position: relative;
+  display: inline-block;
+  z-index: 2000;
+}
+
+.card-menu-button {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+}
+
+.card-menu-button .hamburger-icon svg,
+.card-menu-button svg {
+  display: inline-block;
+  vertical-align: middle;
+  color: inherit;
+}
+
+/* Ensure icons use currentColor for theming */
+.menu-icon svg, .card-menu-button svg {
+  fill: currentColor;
+}
+
+/* Light theme overrides for CardMenu */
+:root[data-theme="light"] .card-menu-dropdown {
+  background: #ffffff;
+  border-color: rgba(0,0,0,0.06);
+  color: #213547;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.08);
+}
+
+:root[data-theme="light"] .card-menu-item {
+  color: #213547;
+}
+
+:root[data-theme="light"] .card-menu-item a,
+:root[data-theme="light"] .card-menu-item button {
+  color: #213547;
+}
+
+:root[data-theme="light"] .card-menu-item.disabled {
+  opacity: 0.6;
+}
+
+:root[data-theme="light"] .menu-toggle input {
+  background: rgba(0,0,0,0.06);
+}
+
+:root[data-theme="light"] .menu-toggle input:checked {
+  background: #646cff;
+}
+
+:root[data-theme="light"] .menu-icon { width: 1.1rem; color: #213547; }
+
+:root[data-theme="light"] .card-menu-button {
+  color: #213547;
+}
+
+.card-menu-button:focus {
+  outline: 2px solid rgba(100, 108, 255, 0.4);
+}
+
+.card-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  right: 0;
+  background: rgba(10, 10, 10, 0.95);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  min-width: 160px;
+  padding: 0.25rem 0;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.45);
+  transform-origin: top right;
+  z-index: 3000;
+  /* initial closed state styling for smooth expand */
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-6px) scaleY(0.98);
+  transition: transform 180ms ease, opacity 180ms ease, max-height 220ms ease;
+  pointer-events: none;
+}
+
+.card-menu-dropdown.open {
+  max-height: 480px; /* enough to show items */
+  opacity: 1;
+  transform: translateY(0) scaleY(1);
+  pointer-events: auto;
+}
+
+.card-menu-dropdown.closed {
+  /* keep closed state explicit */
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-6px) scaleY(0.98);
+  pointer-events: none;
+}
+
+.card-menu-item {
+  padding: 0.35rem 0.75rem;
+}
+
+.card-menu-item a,
+.card-menu-item button {
+  color: #fff;
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.menu-item-content {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.menu-icon {
+  font-size: 1.05rem;
+  width: 1.2rem;
+  display: inline-flex;
+  justify-content: center;
+}
+
+.menu-label {
+  display: inline-block;
+}
+
+/* Toggle switch styling (iOS-like) */
+.menu-item-toggle {
+  justify-content: space-between;
+}
+
+.menu-toggle {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+}
+
+.menu-toggle input {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 2.4rem;
+  height: 1.4rem;
+  background: rgba(255,255,255,0.12);
+  border-radius: 999px;
+  position: relative;
+  outline: none;
+  cursor: pointer;
+  margin: 0;
+}
+
+.menu-toggle .switch {
+  position: absolute;
+  width: 1rem;
+  height: 1rem;
+  background: #fff;
+  border-radius: 50%;
+  transform: translateX(0.15rem);
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+
+.menu-toggle input:checked {
+  background: #646cff;
+}
+
+.menu-toggle input:checked + .switch {
+  transform: translateX(1.15rem);
+}
+
+/* smaller icon space so toggle aligns right */
+.menu-icon { width: 1.1rem; }
+
+.card-menu-item.disabled,
+.card-menu-item button[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (prefers-color-scheme: light) {
+  .card-menu-button { color: #213547; }
+  .card-menu-dropdown { background: #fff; color: #213547; border-color: rgba(0,0,0,0.06); }
+  .card-menu-item a, .card-menu-item button { color: #213547; }
+}

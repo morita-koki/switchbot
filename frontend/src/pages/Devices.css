@@ -1,0 +1,365 @@
+.devices-page {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.devices-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #646cff;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.back-button {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #fff;
+  text-decoration: none;
+  transition: all 0.3s;
+  font-size: 0.875rem;
+}
+
+.back-button:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #646cff;
+}
+
+.devices-header h1 {
+  margin: 0;
+  font-size: 1.75rem;
+}
+
+.reload-button {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background-color: #646cff;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.reload-button:hover:not(:disabled) {
+  background-color: #535bf2;
+}
+
+.reload-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error {
+  background-color: #ff4444;
+  color: white;
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.loading {
+  text-align: center;
+  font-size: 1.25rem;
+  padding: 2rem;
+  color: #888;
+}
+
+.device-section {
+  margin-bottom: 2rem;
+}
+
+.device-section h2 {
+  text-align: left;
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+  color: #646cff;
+}
+
+.no-devices {
+  text-align: center;
+  color: #888;
+  padding: 1.5rem;
+  font-style: italic;
+}
+
+.device-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.device-card {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 1rem;
+  transition: all 0.3s;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.device-card:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: #646cff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.3);
+}
+
+.device-card h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.device-type {
+  margin: 0;
+  padding: 0.25rem 0.5rem;
+  background-color: rgba(100, 108, 255, 0.2);
+  border-radius: 4px;
+  display: inline-block;
+  font-size: 0.75rem;
+  color: #a0a0ff;
+  width: fit-content;
+}
+
+/* 温湿度計デバイスの特別なスタイル */
+.device-card.meter {
+  border: 2px solid rgba(255, 170, 0, 0.3);
+  min-height: 220px;
+}
+
+.device-card.meter:hover {
+  border-color: rgba(255, 170, 0, 0.6);
+  box-shadow: 0 4px 12px rgba(255, 170, 0, 0.3);
+}
+
+/* デバイス名表示 */
+.device-name-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.edit-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+  padding: 0.25rem;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.edit-button:hover {
+  opacity: 1;
+}
+
+/* 名前編集フォーム */
+.edit-name-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.edit-name-input {
+  padding: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  color: #fff;
+  font-size: 0.875rem;
+}
+
+.edit-name-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.edit-name-buttons button {
+  flex: 1;
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  background: #646cff;
+  color: white;
+}
+
+.edit-name-buttons button:last-child {
+  background: #666;
+}
+
+/* ステータス表示 */
+.status-readings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.status-icon {
+  font-size: 1.1rem;
+}
+
+.status-value {
+  font-weight: 600;
+  color: #fff;
+}
+
+/* 更新日時 */
+.last-updated {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.75rem;
+  color: #888;
+}
+
+/* 更新ボタン */
+.refresh-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  color: #888;
+  font-size: 1.2rem;
+  transition: all 0.2s;
+}
+
+.refresh-button:hover:not(:disabled) {
+  color: #fff;
+  transform: rotate(180deg);
+}
+
+.refresh-button.loading {
+  animation: spin 1s linear infinite;
+}
+
+.refresh-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* データなし表示 */
+.no-status {
+  margin-top: 0.75rem;
+  text-align: center;
+  color: #888;
+}
+
+.no-status p {
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.no-status button {
+  padding: 0.5rem 1rem;
+  background: #646cff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+/* ライトモード調整 */
+:root[data-theme="light"] .devices-page {
+  color: #213547;
+}
+
+:root[data-theme="light"] .back-button {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #213547;
+}
+
+:root[data-theme="light"] .back-button:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+:root[data-theme="light"] .device-card {
+  background-color: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+:root[data-theme="light"] .device-card:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+  border-color: #646cff;
+  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.2);
+}
+
+:root[data-theme="light"] .device-card h3 {
+  color: #213547;
+}
+
+:root[data-theme="light"] .device-type {
+  background-color: rgba(100, 108, 255, 0.15);
+  color: #4c54cc;
+}
+
+:root[data-theme="light"] .device-card.meter {
+  border-color: rgba(255, 140, 0, 0.4);
+}
+
+:root[data-theme="light"] .device-card.meter:hover {
+  border-color: rgba(255, 140, 0, 0.7);
+  box-shadow: 0 4px 12px rgba(255, 140, 0, 0.3);
+}
+
+:root[data-theme="light"] .status-value {
+  color: #213547;
+}
+
+:root[data-theme="light"] .edit-name-input {
+  background: rgba(0, 0, 0, 0.05);
+  color: #213547;
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+:root[data-theme="light"] .loading {
+  color: #666;
+}
+
+:root[data-theme="light"] .no-devices {
+  color: #666;
+}
+
+:root[data-theme="light"] .device-section h2 {
+  color: #4c54cc;
+}

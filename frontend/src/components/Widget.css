@@ -1,0 +1,57 @@
+/* Minimal widget CSS: only rules referenced by WeatherWidget
+   Kept rules:
+   - .muted : placeholder text when data is loading
+   - .weather-bottom : container sizing for the timeline area
+   - .timeline-row : timeline container (includes a faint full-width connector)
+   - .timeline-current-absolute : absolute marker (triangle) showing 'now'
+*/
+
+.muted {
+  margin: 0;
+  color: #9aa6b2;
+  font-size: 0.95rem;
+}
+
+.weather-bottom {
+  flex: 1 1 auto;
+  min-height: 120px;
+  display: flex;
+  align-items: flex-end;
+  padding-top: 0.5rem;
+}
+
+.timeline-row {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 0.25rem 2rem 0.25rem;
+  overflow-x: auto;
+  width: 100%;
+  align-items: center;
+  position: relative;
+}
+
+.timeline-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  background: rgba(255,255,255,0.06);
+  transform: translateY(-50%);
+  z-index: 0;
+}
+
+.timeline-current-absolute {
+  position: absolute;
+  top: 50%;
+  transform: translateX(-50%) translateY(-100%);
+  width: 0;
+  height: 0;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-bottom: 14px solid #ff4d4f;
+  pointer-events: none;
+  z-index: 2;
+}
+  border: 1px solid rgba(255,255,255,0.06);

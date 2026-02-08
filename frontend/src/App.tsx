@@ -1,34 +1,44 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { useState, useEffect, useMemo } from 'react'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { ThemeProvider, CssBaseline } from '@mui/material'
+import Dashboard from './pages/Dashboard'
+import Devices from './pages/Devices'
 import './App.css'
+import Header from './components/Header'
+import { createAppTheme } from './theme'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('theme')
+    return (saved as 'light' | 'dark') || 'dark'
+  })
+
+  const muiTheme = useMemo(() => createAppTheme(theme), [theme])
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('theme', theme)
+  }, [theme])
+
+  
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <ThemeProvider theme={muiTheme}>
+      <CssBaseline />
+      <BrowserRouter>
+        <div className="app">
+          <Header
+            theme={theme}
+            onThemeToggle={(checked: boolean) => setTheme(checked ? 'dark' : 'light')}
+          />
+
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/devices" element={<Devices />} />
+          </Routes>
+        </div>
+      </BrowserRouter>
+    </ThemeProvider>
   )
 }
 

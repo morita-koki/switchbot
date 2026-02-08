@@ -1,0 +1,39 @@
+# --- 1. HTTP (ポート80) から HTTPS (443) へのリダイレクト ---
+server {
+    listen 80;
+    server_name localhost raspberrypi.local 192.168.0.25; # IPアドレスやホスト名
+    return 301 https://$host$request_uri;
+}
+
+# --- 2. HTTPS (ポート443) 設定 ---
+server {
+    listen 443 ssl;
+    server_name localhost raspberrypi.local 192.168.0.25; # IPアドレスやホスト名
+
+    # SSL証明書の指定
+    ssl_certificate /etc/nginx/ssl/server.crt;
+    ssl_certificate_key /etc/nginx/ssl/server.key;
+    
+    # 接続維持とセキュリティ設定
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+
+
+    # 2.1. /api/ は FastAPI (ポート8000) へリバースプロキシ
+    location /api/ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        # WebSocket対応ヘッダー
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+    
+    # 2.2. ルートパス (/) は Reactの静的ファイルを配信
+    location / {
+        root /home/koki/workspace/switchbot/frontend/dist; # Reactのdistフォルダの場所
+        index index.html;
+        try_files $uri $uri/ /index.html; # Reactルーター(SPA)対応
+    }
+}

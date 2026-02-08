@@ -10,7 +10,17 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 from sqlalchemy.orm import Session
 from src.database.database import engine, SessionLocal
 from src.database.models import Base, Device, User, DeviceStatus
+from src.app.switchbot_client import SwitchBotClient
+from src.app.services.device_service import DeviceService
+from dotenv import load_dotenv
 import json
+from typing import Optional
+
+load_dotenv()
+
+# SwitchBot API settings
+SWITCHBOT_CLIENT_TOKEN = os.getenv("SWITCHBOT_CLIENT_TOKEN")
+SWITCHBOT_CLIENT_SECRET = os.getenv("SWITCHBOT_CLIENT_SECRET")
 
 def create_tables():
     """Create all database tables"""
@@ -40,73 +50,93 @@ def seed_users(db: Session):
             print(f"Created user: {user_data['username']}")
 
 def seed_devices(db: Session):
-    """Seed sample devices"""
-    devices_data = [
-        {
-            "device_id": "C271111EC0AB",
-            "name": "Living Room Thermometer",
-            "type": "Meter",
-            "hub_device_id": "000000000000",
-            "is_active": True
-        },
-        {
-            "device_id": "D271111EC0AC",
-            "name": "Bedroom Curtain",
-            "type": "Curtain",
-            "hub_device_id": "000000000000",
-            "is_active": True
-        },
-        {
-            "device_id": "E271111EC0AD",
-            "name": "Smart Lock",
-            "type": "Lock",
-            "hub_device_id": "000000000000",
-            "is_active": True
-        }
-    ]
+    """(removed) Static device seeding is deprecated.
 
-    for device_data in devices_data:
-        # Check if device already exists
-        existing_device = db.query(Device).filter(Device.device_id == device_data["device_id"]).first()
-        if not existing_device:
-            device = Device(**device_data)
-            db.add(device)
-            print(f"Created device: {device_data['name']}")
+    Device rows are created from the SwitchBot Cloud API via
+    `seed_devices_from_api`. This function is left as a no-op to avoid
+    accidental static/random seeding.
+    """
+    print("Static device seeding disabled; use SWITCHBOT_TOKEN to seed from API.")
 
 def seed_device_status(db: Session):
-    """Seed sample device status data"""
-    # Get existing devices
-    thermometer = db.query(Device).filter(Device.type == "Meter").first()
-    curtain = db.query(Device).filter(Device.type == "Curtain").first()
+    """(removed) Static device status seeding is deprecated.
 
-    if thermometer:
-        status_data = {
-            "temperature": "23.5",
-            "humidity": "65",
-            "battery": 85
-        }
-        device_status = DeviceStatus(
-            device_id=thermometer.device_id,
-            status_data=json.dumps(status_data),
-            battery=85,
-            temperature="23.5",
-            humidity="65"
-        )
-        db.add(device_status)
-        print(f"Created status for: {thermometer.name}")
+    Use `DeviceService.fetch_all_meter_statuses()` after devices
+    are populated from the API to create DeviceStatus rows.
+    """
+    print("Static device status seeding disabled; use SWITCHBOT_TOKEN to seed from API.")
 
-    if curtain:
-        status_data = {
-            "position": 50,
-            "battery": 92
-        }
-        device_status = DeviceStatus(
-            device_id=curtain.device_id,
-            status_data=json.dumps(status_data),
-            battery=92
-        )
-        db.add(device_status)
-        print(f"Created status for: {curtain.name}")
+def seed_devices_from_api(db: Session):
+    """Seed devices using SwitchBotClient via DeviceService.
+
+    This uses `DeviceService` to call the client where appropriate. It will
+    create/update Device rows based on API device list, and then call
+    `fetch_all_meter_statuses` to populate meter DeviceStatus entries.
+    """
+    token = SWITCHBOT_CLIENT_TOKEN or ""
+    secret = SWITCHBOT_CLIENT_SECRET or ""
+    if not token:
+        print("SWITCHBOT_CLIENT_TOKEN not set; skipping API seeding.")
+        return
+
+    client = SwitchBotClient(token=token, secret=secret)
+    ds = DeviceService(db=db, client=client)
+
+    # Get devices from client
+    try:
+        resp = client.get_devices()
+    except Exception as e:
+        print(f"Failed to fetch devices from SwitchBot API: {e}")
+        return
+
+    devices = resp.get("body", {}).get("deviceList", [])
+
+    for dev in devices:
+        device_id = dev.get("deviceId")
+        if not device_id:
+            continue
+
+        existing_device = db.query(Device).filter(Device.device_id == device_id).first()
+        name = dev.get("deviceName") or dev.get("deviceType") or device_id
+        type_ = dev.get("deviceType") or dev.get("deviceModel") or "Unknown"
+        hub_device_id = dev.get("hubDeviceId")
+
+        if not existing_device:
+            device = Device(
+                device_id=device_id,
+                name=name,
+                type=type_,
+                hub_device_id=hub_device_id,
+                is_active=True
+            )
+            db.add(device)
+            print(f"Created device from API: {name} ({device_id})")
+        else:
+            updated = False
+            if existing_device.name != name:
+                existing_device.name = name
+                updated = True
+            if existing_device.type != type_:
+                existing_device.type = type_
+                updated = True
+            if updated:
+                print(f"Updated device from API: {name} ({device_id})")
+
+    # After ensuring Device rows exist, fetch and store meter statuses via DeviceService
+    status_result = ds.fetch_all_meter_statuses()
+    print(f"Fetched meter statuses: {status_result}")
+
+def seed_weather_forecast(db: Session):
+    """Seed initial weather forecast data"""
+    try:
+        from src.app.services.weather_service import WeatherService
+
+        service = WeatherService(db)
+        # Yahoo Japanから取得できる全てのデータを保存（通常24-48時間分）
+        result = service.fetch_and_store_forecast(hours=48)
+        print(f"Fetched weather forecast: {result['stored']}/{result['total']} entries stored")
+    except Exception as e:
+        print(f"Failed to fetch weather forecast: {e}")
 
 def main():
     """Main seed function"""
@@ -121,8 +151,14 @@ def main():
     try:
         # Seed data
         seed_users(db)
-        seed_devices(db)
-        seed_device_status(db)
+        # Require SWITCHBOT_CLIENT_TOKEN to seed devices from SwitchBot Cloud
+        if not SWITCHBOT_CLIENT_TOKEN:
+            raise RuntimeError(
+                "SWITCHBOT_CLIENT_TOKEN is not set. Device seeding requires a SwitchBot Cloud token."
+            )
+
+        seed_devices_from_api(db)
+        seed_weather_forecast(db)
 
         # Commit changes
         db.commit()

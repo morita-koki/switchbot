@@ -20,7 +20,7 @@ install:
 # Run database migrations
 db-migrate:
 	@echo "Running database migrations..."
-	alembic upgrade head
+	uv run alembic upgrade head
 	@echo "Migrations completed successfully!"
 
 # Create new migration
@@ -30,7 +30,7 @@ db-create-migration:
 		exit 1; \
 	fi
 	@echo "Creating new migration: $(MSG)"
-	alembic revision --autogenerate -m "$(MSG)"
+	uv run alembic revision --autogenerate -m "$(MSG)"
 	@echo "Migration created successfully!"
 
 # Reset database
@@ -50,7 +50,7 @@ db-reset:
 # Seed database
 db-seed:
 	@echo "Seeding database with initial data..."
-	python src/scripts/seed.py
+	uv run python src/scripts/seed.py
 	@echo "Seeding completed successfully!"
 
 # Setup database (migrate + seed)
@@ -69,4 +69,4 @@ db-clean:
 # Start development server
 dev:
 	@echo "Starting development server..."
-	uvicorn src.app.main:app --reload --host 0.0.0.0 --port 8000
+	uv run uvicorn src.app.main:app --reload --host 0.0.0.0 --port 8000

@@ -1,7 +1,7 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from database import Base
+from .database import Base
 
 class Device(Base):
     __tablename__ = "devices"
@@ -9,6 +9,7 @@ class Device(Base):
     id = Column(Integer, primary_key=True, index=True)
     device_id = Column(String(50), unique=True, index=True, nullable=False)
     name = Column(String(100), nullable=False)
+    custom_name = Column(String(100), nullable=True)
     type = Column(String(50), nullable=False)
     hub_device_id = Column(String(50))
     is_active = Column(Boolean, default=True)
@@ -56,3 +57,15 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+class WeatherForecast(Base):
+    __tablename__ = "weather_forecasts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    forecast_datetime = Column(DateTime(timezone=True), nullable=False, index=True)
+    temperature = Column(Float, nullable=True)
+    weather_condition = Column(String(100), nullable=True)
+    precipitation_mm = Column(Float, nullable=True)
+    label = Column(String(50), nullable=True)
+    source = Column(String(50), default="yahoo")
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
