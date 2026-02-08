@@ -82,6 +82,10 @@ def start_scheduler():
     logger.info(f"  - デバイスステータス: {device_interval_minutes}分ごと")
     logger.info(f"  - 天気予報: {weather_interval_minutes}分ごと")
 
+    # 起動時に即座に天気データを取得
+    logger.info("起動時の天気予報取得を開始")
+    fetch_weather_forecast_job()
+
 
 def shutdown_scheduler():
     """スケジューラーを停止"""
