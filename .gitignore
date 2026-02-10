@@ -11,3 +11,7 @@ wheels/
 
 
 .env
+
+# Credentials
+backend/google-calendar-credentials.json
+*.credentials.json
