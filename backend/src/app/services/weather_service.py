@@ -64,12 +64,10 @@ class WeatherService:
     def get_latest_forecast(self, hours: int = 24) -> Dict:
         """DBから最新の天気予報を取得
 
-        その日1日分（0時～24時）のデータを返す
+        現在時刻以降、指定時間分のデータを返す
         """
-        # 現在の日本時刻で今日の0時と翌日0時を取得
         now = datetime.now()
-        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        tomorrow_start = today_start + timedelta(days=1)
+        end_time = now + timedelta(hours=hours)
 
         # 各予報時刻ごとに最新のデータを取得
         # サブクエリで各forecast_datetimeの最大created_atを取得
@@ -79,8 +77,8 @@ class WeatherService:
                 func.max(WeatherForecast.created_at).label('max_created')
             )
             .filter(
-                WeatherForecast.forecast_datetime >= today_start,
-                WeatherForecast.forecast_datetime < tomorrow_start
+                WeatherForecast.forecast_datetime >= now,
+                WeatherForecast.forecast_datetime <= end_time
             )
             .group_by(WeatherForecast.forecast_datetime)
             .subquery()
