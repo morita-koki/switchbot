@@ -59,6 +59,32 @@ class SwitchBotClient:
 
         return response.json()
 
+    def send_command(self, device_id: str, command: str, parameter: str = "default", command_type: str = "command") -> Dict[str, Any]:
+        """デバイスにコマンドを送信
+
+        Args:
+            device_id: デバイスID
+            command: コマンド名 (turnOn, turnOff, setBrightness, setAll など)
+            parameter: パラメータ (default, 1-100, "26,2,1,on" など)
+            command_type: コマンドタイプ (command または customize)
+
+        Returns:
+            APIレスポンス
+        """
+        url = f"{self.BASE_URL}/devices/{device_id}/commands"
+        headers = self._get_headers()
+
+        body = {
+            "command": command,
+            "parameter": parameter,
+            "commandType": command_type
+        }
+
+        response = requests.post(url, headers=headers, json=body)
+        response.raise_for_status()
+
+        return response.json()
+
     @staticmethod
     def is_meter_device(device_type: str) -> bool:
         """温湿度計デバイスかどうか判定"""

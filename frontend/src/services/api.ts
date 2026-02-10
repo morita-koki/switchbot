@@ -59,9 +59,48 @@ export interface TodayCalendar {
   date: string
 }
 
+export interface CommandResult {
+  success: boolean
+  device_id: string
+  command: string
+  result: {
+    statusCode: number
+    message: string
+  }
+}
+
+export interface SwitchBotDevice {
+  deviceId: string
+  deviceName: string
+  deviceType: string
+  hubDeviceId?: string
+  remoteType?: string
+  // Curtain specific
+  group?: boolean
+  master?: boolean
+  curtainDevicesIds?: string[]
+}
+
+export interface SwitchBotDevicesResponse {
+  statusCode: number
+  message: string
+  body: {
+    deviceList: SwitchBotDevice[]
+    infraredRemoteList: SwitchBotDevice[]
+  }
+}
+
 export const api = {
   async getDevicesWithStatus(): Promise<DeviceWithStatus[]> {
     const response = await fetch('/api/devices/status')
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    return response.json()
+  },
+
+  async getAllDevices(): Promise<SwitchBotDevicesResponse> {
+    const response = await fetch('/api/devices')
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
@@ -79,8 +118,8 @@ export const api = {
     }
   },
 
-  async getWeatherForecast(hours = 24): Promise<WeatherForecast> {
-    const response = await fetch(`/api/weather/forecast?hours=${hours}`)
+  async getWeatherForecast(hours = 48, fromMidnight = true): Promise<WeatherForecast> {
+    const response = await fetch(`/api/weather/forecast?hours=${hours}&from_midnight=${fromMidnight}`)
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
@@ -97,6 +136,27 @@ export const api = {
 
   async getTodayCalendar(): Promise<TodayCalendar> {
     const response = await fetch('/api/calendar/today')
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    return response.json()
+  },
+
+  async sendDeviceCommand(
+    deviceId: string,
+    command: string,
+    parameter = 'default',
+    commandType = 'command'
+  ): Promise<CommandResult> {
+    const response = await fetch(`/api/devices/${deviceId}/command`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        command,
+        parameter,
+        command_type: commandType
+      })
+    })
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
     }

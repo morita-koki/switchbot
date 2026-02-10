@@ -32,35 +32,23 @@ const HomeStateWidget: React.FC = () => {
   }, [])
 
   return (
-    <Box sx={{ py: 3 }}>
-      <Typography
-        variant="h5"
-        sx={{
-          fontWeight: 700,
-          mb: 3,
-          color: theme.palette.text.primary,
-        }}
-      >
-        現在の室温
-      </Typography>
-
+    <Box sx={{ py: 1.5 }}>
       <Box
         sx={{
-          display: 'grid',
-          gridTemplateColumns: {
-            xs: '1fr',
-            sm: 'repeat(2, 1fr)',
-          },
-          gap: 4,
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: { xs: 3, sm: 5 },
+          flexWrap: 'wrap',
         }}
       >
         {/* 室内温度 */}
-        <Box>
-          <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: 0.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <ThermostatIcon
               sx={{
                 fontSize: '1.25rem',
-                color: theme.palette.text.secondary,
+                color: theme.palette.primary.main,
               }}
             />
             <Typography
@@ -70,6 +58,7 @@ const HomeStateWidget: React.FC = () => {
                 letterSpacing: '0.05em',
                 color: theme.palette.text.secondary,
                 fontWeight: 600,
+                fontSize: '0.7rem',
               }}
             >
               室内
@@ -77,7 +66,7 @@ const HomeStateWidget: React.FC = () => {
           </Box>
           <Typography
             sx={{
-              fontSize: '3rem',
+              fontSize: '1.75rem',
               fontWeight: 700,
               lineHeight: 1,
               color: theme.palette.primary.main,
@@ -88,17 +77,17 @@ const HomeStateWidget: React.FC = () => {
           <Typography
             variant="body2"
             sx={{
-              mt: 1,
               color: theme.palette.text.secondary,
+              fontSize: '0.8rem',
             }}
           >
-            湿度 {hum}%
+            {hum}%
           </Typography>
         </Box>
 
         {/* 室外温度 */}
-        <Box>
-          <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: 0.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <ThermostatIcon
               sx={{
                 fontSize: '1.25rem',
@@ -112,6 +101,7 @@ const HomeStateWidget: React.FC = () => {
                 letterSpacing: '0.05em',
                 color: theme.palette.text.secondary,
                 fontWeight: 600,
+                fontSize: '0.7rem',
               }}
             >
               室外
@@ -119,7 +109,7 @@ const HomeStateWidget: React.FC = () => {
           </Box>
           <Typography
             sx={{
-              fontSize: '3rem',
+              fontSize: '1.75rem',
               fontWeight: 700,
               lineHeight: 1,
               color: theme.palette.text.primary,
@@ -134,15 +124,15 @@ const HomeStateWidget: React.FC = () => {
           <Typography
             variant="body2"
             sx={{
-              mt: 1,
               color: theme.palette.text.secondary,
+              fontSize: '0.8rem',
             }}
           >
             {loading
-              ? '読み込み中...'
+              ? '...'
               : outdoorData
-              ? `湿度 ${outdoorData.humidity !== null ? Math.round(outdoorData.humidity) : '--'}%`
-              : 'センサー未設定'}
+              ? `${outdoorData.humidity !== null ? Math.round(outdoorData.humidity) : '--'}%`
+              : '--'}
           </Typography>
         </Box>
       </Box>

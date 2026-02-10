@@ -35,6 +35,13 @@ app = FastAPI(lifespan=lifespan)
 class UpdateNameRequest(BaseModel):
     custom_name: str
 
+
+class CommandRequest(BaseModel):
+    command: str
+    parameter: str = "default"
+    command_type: str = "command"
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -118,18 +125,67 @@ def update_device_name(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/devices/{device_id}/command")
+def send_device_command(device_id: str, request: CommandRequest):
+    """デバイスにコマンドを送信
+
+    Args:
+        device_id: デバイスID
+        request.command: コマンド名 (turnOn, turnOff, setBrightness, setAll など)
+        request.parameter: パラメータ (default, 1-100, "26,2,1,on" など)
+        request.command_type: コマンドタイプ (command または customize)
+    """
+    token = os.getenv('SWITCHBOT_CLIENT_TOKEN')
+    secret = os.getenv('SWITCHBOT_CLIENT_SECRET')
+
+    if not token or not secret:
+        raise HTTPException(status_code=500, detail="認証情報が設定されていません")
+
+    try:
+        client = SwitchBotClient(token, secret)
+        result = client.send_command(
+            device_id=device_id,
+            command=request.command,
+            parameter=request.parameter,
+            command_type=request.command_type
+        )
+
+        # SwitchBot APIのレスポンスをチェック
+        if result.get('statusCode') != 100:
+            logger = logging.getLogger(__name__)
+            logger.error(f"コマンド送信失敗: {result}")
+            raise HTTPException(
+                status_code=400,
+                detail=f"コマンド送信に失敗しました: {result.get('message', 'Unknown error')}"
+            )
+
+        return {
+            "success": True,
+            "device_id": device_id,
+            "command": request.command,
+            "result": result
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error(f"コマンド送信エラー: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/weather/forecast")
-def get_weather_forecast(hours: int = 24, db: Session = Depends(get_db)):
+def get_weather_forecast(hours: int = 48, from_midnight: bool = True, db: Session = Depends(get_db)):
     """DBから最新の天気予報を取得
 
     Query params:
-    - hours: 取得する時間幅（デフォルト24）
+    - hours: 取得する時間幅（デフォルト48）
+    - from_midnight: 今日の0時から取得するか（デフォルトTrue）
     """
     try:
         from src.app.services.weather_service import WeatherService
 
         service = WeatherService(db)
-        result = service.get_latest_forecast(hours=hours)
+        result = service.get_latest_forecast(hours=hours, from_midnight=from_midnight)
 
         # データが空の場合は警告を返す
         if not result.get('forecasts'):

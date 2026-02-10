@@ -61,13 +61,22 @@ class WeatherService:
             logger.error(f"天気予報の取得・保存に失敗: {e}")
             raise
 
-    def get_latest_forecast(self, hours: int = 24) -> Dict:
+    def get_latest_forecast(self, hours: int = 48, from_midnight: bool = True) -> Dict:
         """DBから最新の天気予報を取得
 
-        現在時刻以降、指定時間分のデータを返す
+        Args:
+            hours: 取得する時間幅
+            from_midnight: Trueの場合、今日の0:00から開始
         """
         now = datetime.now()
-        end_time = now + timedelta(hours=hours)
+
+        if from_midnight:
+            # 今日の0:00から開始
+            start_time = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        else:
+            start_time = now
+
+        end_time = start_time + timedelta(hours=hours)
 
         # 各予報時刻ごとに最新のデータを取得
         # サブクエリで各forecast_datetimeの最大created_atを取得
@@ -77,7 +86,7 @@ class WeatherService:
                 func.max(WeatherForecast.created_at).label('max_created')
             )
             .filter(
-                WeatherForecast.forecast_datetime >= now,
+                WeatherForecast.forecast_datetime >= start_time,
                 WeatherForecast.forecast_datetime <= end_time
             )
             .group_by(WeatherForecast.forecast_datetime)

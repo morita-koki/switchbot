@@ -7,61 +7,173 @@ import AcUnitIcon from '@mui/icons-material/AcUnit'
 import NightsStayIcon from '@mui/icons-material/NightsStay'
 import UmbrellaIcon from '@mui/icons-material/Umbrella'
 import CloudQueueIcon from '@mui/icons-material/CloudQueue'
-import Stepper from '@mui/material/Stepper'
-import Step from '@mui/material/Step'
-import StepLabel from '@mui/material/StepLabel'
-import StepConnector, { stepConnectorClasses } from '@mui/material/StepConnector'
-import { styled } from '@mui/material/styles'
 import { useTheme } from '@mui/material/styles'
 import { api } from '../services/api'
 import type { ForecastPoint, WeatherForecast } from '../services/api'
 
-const ColorlibConnector = styled(StepConnector)(() => ({
-  [`&.${stepConnectorClasses.alternativeLabel}`]: {
-    top: 22,
-  },
-  [`& .${stepConnectorClasses.line}`]: {
-    height: 3,
-    border: 0,
-    backgroundColor: 'transparent',
-    borderRadius: 1,
-  },
-}))
-
-interface ColorlibStepIconProps {
-  icon: React.ReactNode
-  active?: boolean
-  completed?: boolean
+interface EnhancedForecastPoint extends ForecastPoint {
+  isPast: boolean
+  isToday: boolean
+  isTomorrow: boolean
+  isCurrent: boolean
+  hourIndex: number
 }
 
-const ColorlibStepIconRoot = styled('div')<{ ownerState: { active?: boolean } }>(
-  ({ ownerState }) => ({
-    backgroundColor: 'transparent',
-    zIndex: 1,
-    width: 50,
-    height: 50,
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    transition: 'all 0.2s ease',
-    ...(ownerState.active && {
-      transform: 'scale(1.15)',
-    }),
-  }),
-)
+const getWeatherIcon = (
+  f: ForecastPoint,
+  iconSize: string,
+  isPast: boolean
+) => {
+  const precipitation = f.precipitation_mm ?? 0
+  const dt = new Date(f.dt)
+  const hour = dt.getHours()
+  const isDay = hour >= 6 && hour < 18
 
-function ColorlibStepIcon(props: ColorlibStepIconProps) {
-  const { active, icon } = props
+  const iconStyle = {
+    fontSize: iconSize,
+    filter: isPast ? 'grayscale(70%)' : 'none',
+    transition: 'filter 0.3s ease',
+  }
+
+  // 降水量が1mm以上の場合は雨
+  if (precipitation >= 1) {
+    return <UmbrellaIcon sx={{ ...iconStyle, color: isPast ? 'inherit' : '#2196F3' }} />
+  }
+
+  // 降水量が0.5mm〜1mmの場合は曇りと雨
+  if (precipitation >= 0.5) {
+    return <CloudQueueIcon sx={{ ...iconStyle, color: isPast ? 'inherit' : '#90A4AE' }} />
+  }
+
+  // 降水量が少ない場合は温度と時刻で判定
+  const temp = f.temp_c ?? 0
+
+  // 氷点下または5度以下の場合は雪
+  if (temp < 5) {
+    return <AcUnitIcon sx={{ ...iconStyle, color: isPast ? 'inherit' : '#00BCD4' }} />
+  }
+
+  // 天気テキストに基づいて判定
+  const weatherText = (f.weather || '').toLowerCase()
+  if (weatherText.includes('雨')) {
+    return <UmbrellaIcon sx={{ ...iconStyle, color: isPast ? 'inherit' : '#2196F3' }} />
+  }
+  if (weatherText.includes('曇')) {
+    return <CloudIcon sx={{ ...iconStyle, color: isPast ? 'inherit' : '#78909C' }} />
+  }
+
+  // 晴れの場合、昼夜で判定
+  if (isDay) {
+    return <WbSunnyIcon sx={{ ...iconStyle, color: isPast ? 'inherit' : '#FF9500' }} />
+  } else {
+    return <NightsStayIcon sx={{ ...iconStyle, color: isPast ? 'inherit' : '#FFD700' }} />
+  }
+}
+
+interface ForecastCellProps {
+  forecast: EnhancedForecastPoint
+  iconSize: string
+  isCompact?: boolean
+}
+
+const ForecastCell: React.FC<ForecastCellProps> = ({
+  forecast,
+  iconSize,
+  isCompact = false,
+}) => {
+  const theme = useTheme()
+
+  const cellWidth = isCompact ? '40px' : '52px'
+  const tempFontSize = isCompact ? '0.7rem' : '0.8rem'
+  const timeFontSize = isCompact ? '0.6rem' : '0.7rem'
 
   return (
-    <ColorlibStepIconRoot ownerState={{ active }}>
-      {icon}
-    </ColorlibStepIconRoot>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        minWidth: cellWidth,
+        py: 0.5,
+        px: 0.25,
+        opacity: forecast.isPast ? 0.4 : 1,
+        borderBottom: forecast.isCurrent
+          ? `2px solid ${theme.palette.primary.main}`
+          : '2px solid transparent',
+        transition: 'opacity 0.3s ease',
+      }}
+    >
+      <Typography
+        sx={{
+          fontSize: timeFontSize,
+          color: 'text.secondary',
+          fontWeight: forecast.isCurrent ? 700 : 400,
+        }}
+      >
+        {forecast.hourIndex}
+      </Typography>
+      <Box sx={{ my: 0.25 }}>
+        {getWeatherIcon(forecast, iconSize, forecast.isPast)}
+      </Box>
+      <Typography
+        sx={{
+          fontSize: tempFontSize,
+          fontWeight: 600,
+          color: forecast.isPast ? 'text.secondary' : 'text.primary',
+        }}
+      >
+        {forecast.temp_c !== null ? `${Math.round(forecast.temp_c)}°` : '-'}
+      </Typography>
+    </Box>
+  )
+}
+
+interface ForecastRowProps {
+  forecasts: EnhancedForecastPoint[]
+  iconSize: string
+  isCompact?: boolean
+}
+
+const ForecastRow: React.FC<ForecastRowProps> = ({
+  forecasts,
+  iconSize,
+  isCompact = false,
+}) => {
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        overflowX: 'auto',
+        gap: 0.25,
+        pb: 0.5,
+        '&::-webkit-scrollbar': { height: 4 },
+        '&::-webkit-scrollbar-track': {
+          background: 'rgba(0, 0, 0, 0.1)',
+          borderRadius: 2,
+        },
+        '&::-webkit-scrollbar-thumb': {
+          background: 'rgba(100, 108, 255, 0.3)',
+          borderRadius: 2,
+          '&:hover': {
+            background: 'rgba(100, 108, 255, 0.5)',
+          },
+        },
+      }}
+    >
+      {forecasts.map((f, i) => (
+        <ForecastCell
+          key={i}
+          forecast={f}
+          iconSize={iconSize}
+          isCompact={isCompact}
+        />
+      ))}
+    </Box>
   )
 }
 
 const WeatherWidget: React.FC = () => {
-  const [forecast, setForecast] = useState<ForecastPoint[]>([])
+  const [forecasts, setForecasts] = useState<EnhancedForecastPoint[]>([])
   const mounted = React.useRef(true)
   const theme = useTheme()
 
@@ -69,11 +181,35 @@ const WeatherWidget: React.FC = () => {
     mounted.current = true
     const load = async () => {
       try {
-        const wf: WeatherForecast = await api.getWeatherForecast(24)
+        // 48時間分のデータを0時から取得
+        const wf: WeatherForecast = await api.getWeatherForecast(48, true)
         if (!mounted.current) return
-        setForecast(wf.forecasts)
+
+        const now = new Date()
+        const todayStr = now.toDateString()
+        const tomorrowDate = new Date(now.getTime() + 86400000)
+        const tomorrowStr = tomorrowDate.toDateString()
+        const currentHour = now.getHours()
+
+        const enhanced: EnhancedForecastPoint[] = wf.forecasts.map((f) => {
+          const dt = new Date(f.dt)
+          const forecastDateStr = dt.toDateString()
+          const isToday = forecastDateStr === todayStr
+          const isTomorrow = forecastDateStr === tomorrowStr
+          const forecastHour = dt.getHours()
+
+          return {
+            ...f,
+            isPast: isToday && forecastHour < currentHour,
+            isToday,
+            isTomorrow,
+            isCurrent: isToday && forecastHour === currentHour,
+            hourIndex: forecastHour,
+          }
+        })
+
+        setForecasts(enhanced)
       } catch (e) {
-        // ignore errors for now
         console.error('WeatherWidget load error', e)
       }
     }
@@ -81,7 +217,7 @@ const WeatherWidget: React.FC = () => {
     load()
 
     const wTimer = setInterval(() => {
-      api.getWeatherForecast(24).then(wf => setForecast(wf.forecasts)).catch(() => {})
+      load()
     }, 1000 * 60 * 15) // 15min
 
     return () => {
@@ -90,155 +226,64 @@ const WeatherWidget: React.FC = () => {
     }
   }, [])
 
-  // render a horizontal, scrollable stepper for the bottom half
-  const renderTimeline = () => {
-    if (!forecast || forecast.length === 0) {
-      return <div className="muted">天気データを取得中…</div>
-    }
+  const todayForecasts = forecasts.filter((f) => f.isToday)
+  const tomorrowForecasts = forecasts.filter((f) => f.isTomorrow)
 
-    const getWeatherIcon = (f: ForecastPoint) => {
-      const precipitation = f.precipitation_mm ?? 0
-      const dt = new Date(f.dt)
-      const hour = dt.getHours()
-      const isDay = hour >= 6 && hour < 18
-
-      // 降水量が1mm以上の場合は雨
-      if (precipitation >= 1) {
-        return <UmbrellaIcon sx={{ fontSize: '3rem', color: '#2196F3' }} />
-      }
-
-      // 降水量が0.5mm〜1mmの場合は曇りと雨
-      if (precipitation >= 0.5) {
-        return (
-          <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <CloudQueueIcon sx={{ fontSize: '3rem', color: '#90A4AE' }} />
-          </Box>
-        )
-      }
-
-      // 降水量が少ない場合は温度と時刻で判定
-      const temp = f.temp_c ?? 0
-
-      // 氷点下または5度以下の場合は雪
-      if (temp < 5) {
-        return <AcUnitIcon sx={{ fontSize: '3rem', color: '#00BCD4' }} />
-      }
-
-      // 天気テキストに基づいて判定
-      const weatherText = (f.weather || '').toLowerCase()
-      if (weatherText.includes('雨')) {
-        return <UmbrellaIcon sx={{ fontSize: '3rem', color: '#2196F3' }} />
-      }
-      if (weatherText.includes('曇')) {
-        return <CloudIcon sx={{ fontSize: '3rem', color: '#78909C' }} />
-      }
-
-      // 晴れの場合、昼夜で判定
-      if (isDay) {
-        return <WbSunnyIcon sx={{ fontSize: '3rem', color: '#FF9500' }} />
-      } else {
-        return <NightsStayIcon sx={{ fontSize: '3rem', color: '#FFD700' }} />
-      }
-    }
-
-    // Find the current time index for active step
-    const now = new Date().getTime()
-    let activeStep = 0
-    for (let i = 0; i < forecast.length; i++) {
-      const forecastTime = new Date(forecast[i].dt).getTime()
-      if (now >= forecastTime) {
-        activeStep = i
-      } else {
-        break
-      }
-    }
-
+  if (forecasts.length === 0) {
     return (
-      <Box
-        sx={{
-          overflowX: 'auto',
-          '&::-webkit-scrollbar': {
-            height: 6,
-          },
-          '&::-webkit-scrollbar-track': {
-            background: 'rgba(0, 0, 0, 0.1)',
-            borderRadius: 3,
-          },
-          '&::-webkit-scrollbar-thumb': {
-            background: 'rgba(100, 108, 255, 0.3)',
-            borderRadius: 3,
-            '&:hover': {
-              background: 'rgba(100, 108, 255, 0.5)',
-            },
-          },
-        }}
-      >
-        <Stepper
-          activeStep={activeStep}
-          alternativeLabel
-          connector={<ColorlibConnector />}
+      <Box sx={{ py: 1.5 }}>
+        <Typography
+          variant="subtitle1"
           sx={{
-            minWidth: 'max-content',
-            justifyContent: 'center',
-            py: 2,
+            fontWeight: 600,
+            mb: 1,
+            color: theme.palette.text.primary,
           }}
         >
-          {/* 実際の天気予報データ */}
-          {forecast.map((f, i) => {
-            const t = f.temp_c
-            const label = f.label && f.label.trim() ? f.label : new Date(f.dt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-
-            return (
-              <Step key={i}>
-                <StepLabel
-                  StepIconComponent={(props) => (
-                    <ColorlibStepIcon {...props} icon={getWeatherIcon(f)} />
-                  )}
-                  sx={{
-                    '& .MuiStepLabel-label': {
-                      mt: 1,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: 0.5,
-                    },
-                  }}
-                >
-                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                    {label}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      fontWeight: 600,
-                      fontSize: '0.9rem',
-                    }}
-                  >
-                    {t === null ? '—' : `${t.toFixed(1)}°C`}
-                  </Typography>
-                </StepLabel>
-              </Step>
-            )
-          })}
-        </Stepper>
+          天気予報
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          データを取得中...
+        </Typography>
       </Box>
     )
   }
 
   return (
-    <Box sx={{ py: 3 }}>
+    <Box sx={{ py: 1.5 }}>
+      {/* 今日の天気 */}
       <Typography
-        variant="h5"
+        variant="subtitle1"
         sx={{
-          fontWeight: 700,
-          mb: 3,
+          fontWeight: 600,
+          mb: 1,
           color: theme.palette.text.primary,
         }}
       >
-        今日の天気
+        今日
       </Typography>
+      <ForecastRow forecasts={todayForecasts} iconSize="1.75rem" />
 
-      {renderTimeline()}
+      {/* 明日の天気 - より小さく */}
+      {tomorrowForecasts.length > 0 && (
+        <Box sx={{ mt: 1.5, opacity: 0.85 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              fontWeight: 600,
+              mb: 0.75,
+              color: theme.palette.text.secondary,
+            }}
+          >
+            明日
+          </Typography>
+          <ForecastRow
+            forecasts={tomorrowForecasts}
+            iconSize="1.25rem"
+            isCompact
+          />
+        </Box>
+      )}
     </Box>
   )
 }
